@@ -47,9 +47,9 @@ function validate() {
 
     console.log('')
     console.log('')
-    console.log('-----------请进行前置检查，1分钟之后，继续...--------------')
+    console.log('-----------请进行前置检查，5秒钟之后，继续...--------------')
     console.log('')
-    sleep.sleep(60);
+    sleep.sleep(5);
 }
 
 validate();

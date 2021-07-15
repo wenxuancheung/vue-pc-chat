@@ -79,6 +79,7 @@ export default {
         axios.defaults.baseURL = Config.APP_SERVER;
 
         let userId = getItem('userId');
+        console.info('userId',userId)
         let token = getItem('token');
         if (userId) {
             let portrait = getItem("userPortrait");
@@ -115,7 +116,6 @@ export default {
                 this.appToken = session.token;
                 if (!userId || session.status === 0/*服务端pc login session不存在*/) {
                     this.qrCode = jrQRCode.getQrBase64(Config.QR_CODE_PREFIX_PC_SESSION + session.token);
-
                     if (userId) {
                         this.refreshQrCode();
                     }
@@ -151,6 +151,13 @@ export default {
                             setItem('userId', userId);
                             setItem('token', imToken);
                         }
+                        break;
+                    case 8:
+                        this.lastAppToken = ''
+                        this.qrCode = null;
+                        this.appToken = '';
+                        this.loginStatus = 0;
+                        this.createPCLoginSession(null);
                         break;
                     case 9:
                         this.qrCode = response.data.result.portrait;
@@ -195,6 +202,7 @@ export default {
         },
 
         onConnectionStatusChange(status) {
+            console.log('onConnectionStatusChange',status)
             if (status === ConnectionStatus.ConnectionStatusLogout
                 || status === ConnectionStatus.ConnectionStatusRejected
                 || status === ConnectionStatus.ConnectionStatusSecretKeyMismatch
@@ -206,6 +214,7 @@ export default {
                 if (isElectron() || (Config.CLIENT_ID_STRATEGY === 1 || Config.CLIENT_ID_STRATEGY === 2)) {
                     isElectron() && ipcRenderer.send('logined', {closeWindowToExit: getItem(wfc.getUserId() + '-' + 'closeWindowToExit') === '1'})
                     if (this.enableAutoLogin) {
+                        // 设置自动登录
                         store.setEnableAutoLogin(this.enableAutoLogin)
                     }
                 }
