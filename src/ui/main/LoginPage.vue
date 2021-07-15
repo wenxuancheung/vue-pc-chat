@@ -72,6 +72,7 @@ export default {
             appToken: '',
             lastAppToken: '',
             enableAutoLogin: false,
+            portrait: require('../../assets/images/user-fallback.png')
         }
     },
     created() {
@@ -83,7 +84,12 @@ export default {
         let token = getItem('token');
         if (userId) {
             let portrait = getItem("userPortrait");
-            this.qrCode = portrait;
+            if(portrait){
+                this.qrCode = portrait;
+            }
+            else{
+                this.qrCode = this.portrait
+            }
 
             let autoLogin = getItem(userId + '-' + 'autoLogin') === '1'
             if (autoLogin && token) {
@@ -160,7 +166,12 @@ export default {
                         this.createPCLoginSession(null);
                         break;
                     case 9:
-                        this.qrCode = response.data.result.portrait;
+                        if(response.data.result.portrait){
+                            this.qrCode = response.data.result.portrait;
+                        }
+                        else{
+                            this.qrCode = this.portrait
+                        }
                         setItem("userName", response.data.result.userName);
                         setItem("userPortrait", response.data.result.portrait);
 

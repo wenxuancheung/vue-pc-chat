@@ -219,6 +219,7 @@ let store = {
                     lastTimestamp = conversationState.currentConversationMessageList[msgListLength - 1].timestamp;
                 }
                 this._patchMessage(msg, lastTimestamp);
+                console.log(msg)
                 conversationState.currentConversationMessageList.push(msg);
             }
 
@@ -284,6 +285,7 @@ let store = {
                 return;
             }
             let length = conversationState.currentConversationMessageList.length;
+            console.log(length)
             let lastTimestamp = 0;
             if (length > 0) {
                 let lastMessage = conversationState.currentConversationMessageList[length - 1];
@@ -318,7 +320,6 @@ let store = {
                 if (msg) {
                     msg.messageContent.localPath = localPath;
                     wfc.updateMessageContent(messageId, msg.messageContent);
-
                     conversationState.currentConversationMessageList.forEach(m => {
                         if (m.messageId === messageId) {
                             m.messageContent = msg.messageContent;
@@ -813,10 +814,12 @@ let store = {
             this._patchMessage(m, lastTimestamp);
             lastTimestamp = m.timestamp;
         });
+        console.log(msgs)
         conversationState.currentConversationMessageList = msgs;
     },
 
     _onloadConversationMessages(conversation, messages) {
+        console.log(messages)
         if (conversation.equal(conversationState.currentConversationInfo.conversation)) {
             let lastTimestamp = 0;
             let newMsgs = [];
@@ -839,13 +842,16 @@ let store = {
         let conversation = conversationState.currentConversationInfo.conversation;
         let firstMsgUid = conversationState.currentConversationMessageList.length > 0 ? conversationState.currentConversationMessageList[0].messageUid : 0;
         let firstMsgId = conversationState.currentConversationMessageList.length > 0 ? conversationState.currentConversationMessageList[0].messageId : 0;
+        console.log(conversation)
         let lmsgs = wfc.getMessages(conversation, firstMsgId, true, 20);
+        console.log(lmsgs)
         if (lmsgs.length > 0) {
             this._onloadConversationMessages(conversation, lmsgs);
             setTimeout(() => loadedCB(), 200)
         } else {
             wfc.loadRemoteConversationMessages(conversation, firstMsgUid, 20,
                 (msgs) => {
+                    console.log(msgs)
                     this._onloadConversationMessages(conversation, msgs)
                     if (msgs.length === 0) {
                         completeCB();
