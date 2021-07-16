@@ -47,22 +47,6 @@
                 {{ $t('setting.exit_switch_user') }}
                 <!--        <i class="icon-ion-ios-email-outline"/>-->
             </a>
-            <a
-                class="button"
-                href="mailto:imndxx@gmail.com?Subject=WildfireChat%20Feedback"
-                target="_blank">
-                {{ $t('setting.feedback') }}
-                <i class="icon-ion-ios-email-outline"/>
-            </a>
-
-            <a
-                class="button"
-                href="https://github.com/wildfirechat/vue-pc-chat"
-                target="_blank">
-                Star on Github
-                <i class="icon-ion-social-github"/>
-            </a>
-
         </footer>
     </div>
 </template>
