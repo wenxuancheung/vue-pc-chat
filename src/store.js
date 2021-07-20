@@ -1463,6 +1463,11 @@ let store = {
             count += unreadCount.unread;
         });
         ipcRenderer.send('update-badge', count)
+    },
+
+    // 添加好友
+    handleFriendRequest(userId, accept, extra, successCB, failCB) {
+        wfc.handleFriendRequest(userId, accept, extra, successCB, failCB)
     }
 }
 

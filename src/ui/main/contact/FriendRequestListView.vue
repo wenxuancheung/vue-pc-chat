@@ -18,7 +18,7 @@
                                 <span class="status"
                                       v-else-if="friendRequest.status === 3">{{ $t('friend_request.denied') }}</span>
                                 <!--添加好友-->
-                                <button class="accept" v-else>{{ $t('common.add') }}</button>
+                                <button class="accept" v-else @click="handleFriendRequest(friendRequest)">{{ $t('common.add') }}</button>
                             </div>
                             <p class="reason single-line">
                                 {{friendRequest.reason}}
@@ -49,6 +49,24 @@ export default {
         // 打开好友详情
         showFriendRequest(friendRequest) {
             store.setCurrentFriendRequest(friendRequest);
+        },
+        handleFriendRequest(friendRequest) {
+            let successCB = (res) => {
+                store._loadFriendRequest()
+                this.$notify({
+                    text: '添加成功',
+                    type: 'info'
+                });
+                console.log(res)
+            }
+            let failCB = (err) => {
+                this.$notify({
+                    text: '添加失败',
+                    type: 'info'
+                });
+                console.log(err)
+            }
+            store.handleFriendRequest(friendRequest.target,true,'',successCB,failCB)
         }
     },
     created() {

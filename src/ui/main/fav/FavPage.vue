@@ -1,4 +1,5 @@
 <template>
+    <!--收藏页-->
     <section class="fav-page">
         <!--    <FavCategoryListPanel class="fav-category-list-panel"/>-->
         <section class="fav-category-list-panel-container">
