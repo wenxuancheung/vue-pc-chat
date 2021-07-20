@@ -13,8 +13,8 @@
             <!--    等待扫码-->
             <div v-if="loginStatus === 0" class="pending-scan">
                 <p>{{ $t('login.desc') }}</p>
-                <p>{{ $t('login.tip') }}</p>
-                <p>{{ $t('login.warning') }}</p>
+                <!-- <p>{{ $t('login.tip') }}</p> -->
+                <!-- <p>{{ $t('login.warning') }}</p> -->
             </div>
             <!--    已经扫码-->
             <div v-else-if="loginStatus === 1" class="scanned">

@@ -50,6 +50,7 @@ export default {
     max-width: 400px;
     border-radius: 5px;
     overflow: hidden;
+    border: 1px solid #e8e8e8;
 }
 
 .right-arrow:before {
