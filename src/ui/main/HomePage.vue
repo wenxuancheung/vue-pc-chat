@@ -110,7 +110,7 @@ import {removeItem} from "@/ui/util/storageHelper";
 import {ipcRenderer} from "@/platform";
 import UploadRecordView from "./bigFile/UploadRecordView";
 import CreateConferenceView from "../voip/CreateConferenceView";
-import avenginekit from "../../wfc/av/internal/engine.min";
+import avenginekit from "../../wfc/av/internal/engine-conference.min";
 import localStorageEmitter from "../../ipc/localStorageEmitter";
 import CallEndReason from "../../wfc/av/engine/callEndReason";
 import avenginekitproxy from "../../wfc/av/engine/avenginekitproxy";

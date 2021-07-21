@@ -114,7 +114,7 @@
 </template>
 
 <script>
-import avenginekit from "../../wfc/av/internal/engine.min";
+import avenginekit from "../../wfc/av/internal/engine-conference.min";
 import CallSessionCallback from "../../wfc/av/engine/CallSessionCallback";
 import CallState from "@/wfc/av/engine/callState";
 import {isElectron} from "../../platform";

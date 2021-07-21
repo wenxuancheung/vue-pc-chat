@@ -51,8 +51,9 @@ module.exports = {
             // Command line args (excluding --debug, --dashboard, and --headless) are passed to Electron as well
             // mainProcessArgs: ['--arg-name', 'arg-value']
             // outputDir: 'release',
+            // 打包相关配置
             builderOptions: {
-              productName: 'wildfirechat',
+              productName: '乐寻坊IM',
               appId: 'cn.wildfire.chat',
               compression: 'normal',
               artifactName: '${productName}-${version}-${os}-${arch}.${ext}',
