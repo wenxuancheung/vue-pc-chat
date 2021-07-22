@@ -25,8 +25,9 @@ import SearchType from "@/wfc/model/searchType";
 import Config from "@/config";
 import {getItem, setItem} from "@/ui/util/storageHelper";
 import CompositeMessageContent from "@/wfc/messages/compositeMessageContent";
-import IPCEventType from "./ipcEventType";
+import IPCEventType from "./ipc/ipcEventType";
 import localStorageEmitter from "./ipc/localStorageEmitter";
+import {stringValue} from "./wfc/util/longUtil";
 
 /**
  * 一些说明
@@ -131,7 +132,6 @@ let store = {
         });
 
         wfc.eventEmitter.on(EventType.UserInfosUpdate, (userInfos) => {
-            console.log('init')
             // TODO optimize
             this._loadDefaultConversationList();
             this._loadCurrentConversationMessages();
@@ -219,7 +219,6 @@ let store = {
                     lastTimestamp = conversationState.currentConversationMessageList[msgListLength - 1].timestamp;
                 }
                 this._patchMessage(msg, lastTimestamp);
-                console.log(msg)
                 conversationState.currentConversationMessageList.push(msg);
             }
 
@@ -285,7 +284,6 @@ let store = {
                 return;
             }
             let length = conversationState.currentConversationMessageList.length;
-            console.log(length)
             let lastTimestamp = 0;
             if (length > 0) {
                 let lastMessage = conversationState.currentConversationMessageList[length - 1];
@@ -310,6 +308,10 @@ let store = {
         });
 
         if (isElectron()) {
+            ipcRenderer.on('deep-link', (event, args) => {
+                // TODO
+                console.log('deep-link', args)
+            })
             ipcRenderer.on('file-downloaded', (event, args) => {
                 let messageId = args.messageId;
                 let localPath = args.filePath;
@@ -320,6 +322,7 @@ let store = {
                 if (msg) {
                     msg.messageContent.localPath = localPath;
                     wfc.updateMessageContent(messageId, msg.messageContent);
+
                     conversationState.currentConversationMessageList.forEach(m => {
                         if (m.messageId === messageId) {
                             m.messageContent = msg.messageContent;
@@ -560,7 +563,7 @@ let store = {
     },
 
     playVoice(message) {
-        if(conversationState.currentVoiceMessage){
+        if (conversationState.currentVoiceMessage) {
             conversationState.currentVoiceMessage._isPlaying = false;
         }
         conversationState.currentVoiceMessage = message;
@@ -572,7 +575,6 @@ let store = {
      * @param {Boolean} continuous  true，预览周围的媒体消息；false，只预览第一个参数传入的那条媒体消息
      */
     previewMessage(message, continuous) {
-        console.log('123')
         conversationState.previewMediaItems.length = 0;
         conversationState.previewMediaIndex = null;
         if (continuous) {
@@ -588,11 +590,8 @@ let store = {
                     thumb: 'data:image/png;base64,' + msg.messageContent.thumbnail,
                     autoplay: true,
                 });
-                console.log(msg.messageContent.remotePath)
-                console.log('data:image/png;base64,' + msg.messageContent.thumbnail)
             }
         } else {
-            console.log(2)
             conversationState.previewMediaIndex = 0;
             conversationState.previewMediaItems.push({
                 src: message.messageContent.remotePath,
@@ -803,6 +802,30 @@ let store = {
         conversationState.quotedMessage = message;
     },
 
+    getConversationInfo(conversation){
+        let info = wfc.getConversationInfo(conversation);
+        return this._patchConversationInfo(info, false);
+    },
+
+    getMessages(conversation, fromUid = 0, before = true, withUser = '', callback) {
+        let msg = wfc.getMessageByUid(fromUid);
+        let fromIndex = 0;
+        fromIndex = msg ? msg.messageId : 0;
+        let lmsgs = wfc.getMessages(conversation, fromIndex, before, 20);
+        if (lmsgs.length > 0) {
+            lmsgs = lmsgs.map(m => this._patchMessage(m, 0));
+            setTimeout(() => callback(lmsgs), 200)
+        } else {
+            wfc.loadRemoteConversationMessages(conversation, fromUid, 20,
+                (msgs) => {
+                    callback(msgs.map(m => this._patchMessage(m, 0)))
+                },
+                (error) => {
+                    callback([])
+                });
+        }
+    },
+
     _loadCurrentConversationMessages() {
         if (!conversationState.currentConversationInfo) {
             return;
@@ -814,12 +837,11 @@ let store = {
             this._patchMessage(m, lastTimestamp);
             lastTimestamp = m.timestamp;
         });
-        console.log(msgs)
         conversationState.currentConversationMessageList = msgs;
     },
 
     _onloadConversationMessages(conversation, messages) {
-        console.log(messages)
+        let loadNewMsg = false;
         if (conversation.equal(conversationState.currentConversationInfo.conversation)) {
             let lastTimestamp = 0;
             let newMsgs = [];
@@ -829,10 +851,12 @@ let store = {
                     this._patchMessage(m, lastTimestamp);
                     lastTimestamp = m.timestamp;
                     newMsgs.push(m);
+                    loadNewMsg = true;
                 }
             });
             conversationState.currentConversationMessageList = newMsgs.concat(conversationState.currentConversationMessageList);
         }
+        return loadNewMsg;
     },
 
     loadConversationHistoryMessages(loadedCB, completeCB) {
@@ -840,20 +864,19 @@ let store = {
             return;
         }
         let conversation = conversationState.currentConversationInfo.conversation;
+        let firstMsg = conversationState.currentConversationMessageList.length > 0 ? conversationState.currentConversationMessageList[0] : null;
         let firstMsgUid = conversationState.currentConversationMessageList.length > 0 ? conversationState.currentConversationMessageList[0].messageUid : 0;
         let firstMsgId = conversationState.currentConversationMessageList.length > 0 ? conversationState.currentConversationMessageList[0].messageId : 0;
-        console.log(conversation)
+        console.log('loadConversationHistoryMessage', conversation, firstMsgId, stringValue(firstMsgUid), firstMsg);
         let lmsgs = wfc.getMessages(conversation, firstMsgId, true, 20);
-        console.log(lmsgs)
         if (lmsgs.length > 0) {
             this._onloadConversationMessages(conversation, lmsgs);
             setTimeout(() => loadedCB(), 200)
         } else {
             wfc.loadRemoteConversationMessages(conversation, firstMsgUid, 20,
                 (msgs) => {
-                    console.log(msgs)
-                    this._onloadConversationMessages(conversation, msgs)
-                    if (msgs.length === 0) {
+                    let loadNewMsg = this._onloadConversationMessages(conversation, msgs)
+                    if (!loadNewMsg) {
                         completeCB();
                     } else {
                         this._loadDefaultConversationList();
@@ -930,6 +953,13 @@ let store = {
             this._patchCompositeMessageContent(m.messageContent);
         }
 
+        // TODO 如果Im server支持备选网络，需要根据当前的网络情况，判断当前是处于主网络，还是备选网络，并动态修改媒体类消息的remotePath，不然可能会出现不能正常加载的情况
+        // 如何判断是主网络，还是备选网络，这儿提供一种思路：分别通过主网络和备选网络测试访问im server的/api/version接口
+        // 判断是主网络，还是备选网络，一般启动的时候，检测到网络网络变化的时候，在判断一次。
+        // if(m.messageContent instanceof MediaMessageContent){
+        // TODO 动态修改remotePath
+        // }
+
         return m;
     },
 
@@ -1005,6 +1035,7 @@ let store = {
                 requests.push(or);
             }
         })
+
         requests.sort((a, b) => numberValue(b.timestamp) - numberValue(a.timestamp))
         requests = requests.length >= 20 ? requests.slice(0, 20) : requests;
         let uids = [];
@@ -1016,6 +1047,7 @@ let store = {
             let userInfo = userInfos.find((u => u.uid === fr.target));
             fr._target = userInfo;
         });
+
         contactState.friendRequestList = requests;
     },
 
@@ -1108,7 +1140,7 @@ let store = {
         if (query) {
             console.log('search', query)
             searchState.contactSearchResult = this.searchContact(query);
-            searchState.groupSearchResult = this.searchFavGroup(query);
+            searchState.groupSearchResult = this.searchGroupConversation(query);
             searchState.conversationSearchResult = this.searchConversation(query);
             searchState.messageSearchResult = this.searchMessage(query);
             // 默认不搜索新用户
@@ -1140,11 +1172,8 @@ let store = {
 
     // TODO 到底是什么匹配了
     searchContact(query) {
-        let queryPinyin = convert(query, {style: 0}).join('').trim().toLowerCase();
         let result = contactState.friendList.filter(u => {
-            return u._displayName.indexOf(query) > -1 || u._displayName.indexOf(queryPinyin) > -1
-                || u._pinyin.indexOf(query) > -1 || u._pinyin.indexOf(queryPinyin) > -1
-                || u._firstLetters.indexOf(query) > -1 || u._firstLetters.indexOf(queryPinyin) > -1
+            return u._displayName.indexOf(query) > -1 || u._firstLetters.indexOf(query) > -1 || u._pinyin.indexOf(query) > -1
         });
 
         console.log('friend searchResult', result)
@@ -1196,14 +1225,26 @@ let store = {
 
     // TODO
     searchConversation(query) {
-
-        return [];
+        return conversationState.conversationInfoList.filter(info => {
+            let displayNamePinyin = convert(info.conversation._target._displayName, {style: 0}).join('').trim().toLowerCase();
+            let firstLetters = convert(info.conversation._target._displayName, {style: 4}).join('').trim().toLowerCase();
+            return info.conversation._target._displayName.indexOf(query) > -1 || displayNamePinyin.indexOf(query.toLowerCase()) > -1 || firstLetters.indexOf(query) > -1
+        })
     },
 
-    // TODO
-    searchMessage(query) {
+    searchGroupConversation(query) {
+        query = query.toLowerCase();
+        let groups = conversationState.conversationInfoList.filter(info => info.conversation.type === ConversationType.Group).map(info => info.conversation._target);
+        return groups.filter(groupInfo => {
+            let namePinyin = convert(groupInfo.name, {style: 0}).join('').trim().toLowerCase();
+            let firstLetters = convert(groupInfo.name, {style: 4}).join('').trim().toLowerCase();
+            return groupInfo.name.indexOf(query) > -1 || namePinyin.indexOf(query) > -1 || firstLetters.indexOf(query) > -1
+        })
+    },
 
-        return [];
+    searchMessage(conversation, query) {
+        let msgs = wfc.searchMessage(conversation, query)
+        return msgs.map(m => this._patchMessage(m, 0));
     },
 
     // pick actions

@@ -125,10 +125,7 @@ export default {
     },
     components: {
         PreviewQuotedMessageView,
-    },
-    created() {
-        console.log('quoteMessageView')
-    },
+    }
 }
 
 </script>

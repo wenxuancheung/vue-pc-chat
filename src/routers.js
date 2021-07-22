@@ -10,6 +10,8 @@ import FavPage from "@/ui/main/fav/FavPage";
 import WorkspacePage from "./ui/workspace/WorkspacePage";
 import Conference from "./ui/voip/Conference";
 import CompositeMessagePage from "./ui/main/CompositeMessagePage";
+import MessageHistoryPage from "./ui/main/MessageHistoryPage";
+import ConversationMessageHistoryPage from "./ui/main/ConversationMessageHistoryPage";
 
 const routers = [
     // 登录
@@ -32,7 +34,6 @@ const routers = [
                 component: ContactPage,
             },
             {
-                // 收藏
                 path: 'fav',
                 name: 'fav',
                 component: FavPage,
@@ -73,6 +74,16 @@ const routers = [
         name: 'composite-message',
         path: '/composite',
         component: CompositeMessagePage,
+    },
+    {
+        name: 'message-history',
+        path: '/message-history',
+        component: MessageHistoryPage,
+    },
+    {
+        name: 'conversation-message-history',
+        path: '/conversation-message-history',
+        component: ConversationMessageHistoryPage,
     }
 ]
 export default routers

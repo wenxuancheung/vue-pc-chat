@@ -72,7 +72,7 @@ export default {
             let el = this.$el.getElementsByClassName("active")[0];
             el && el.scrollIntoView({behavior: "instant", block: "center"});
         },
-        // 打开用户信息
+
         showConversationItemContextMenu(event, conversationInfo) {
             this.contextMenuConversationInfo = conversationInfo;
             console.log('xxx', this.contextMenuConversationInfo)

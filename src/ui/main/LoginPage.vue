@@ -6,6 +6,7 @@
         <div class="qr-container">
             <img v-if="qrCode" v-bind:src="qrCode" alt="">
             <p v-else>{{ $t('misc.gen_qr_code') }}</p>
+            <ClipLoader v-if="loginStatus === 4" class="loading" :color="'white'"  :height="'80px'" :width="'80px'"/>
         </div>
         <div class="drag-area"/>
 
@@ -40,8 +41,8 @@
             </div>
 
             <!--      开发调试时，自动登录-->
-            <div v-else-if="loginStatus === 4">
-                <p>{{ $t('login.auto_login_tip') }}</p>
+            <div v-else-if="loginStatus === 4" >
+                <p>数据同步中...</p>
             </div>
         </div>
     </div>
@@ -53,6 +54,7 @@ import Config from "@/config";
 import wfc from '../../wfc/client/wfc'
 import PCSession from "@/wfc/model/pcsession";
 import jrQRCode from 'jr-qrcode'
+import ClipLoader from 'vue-spinner/src/ClipLoader'
 import ConnectionStatus from "@/wfc/client/connectionStatus";
 import EventType from "@/wfc/client/wfcEvent";
 import {clear, getItem, setItem} from "@/ui/util/storageHelper";
@@ -72,24 +74,19 @@ export default {
             appToken: '',
             lastAppToken: '',
             enableAutoLogin: false,
-            portrait: require('../../assets/images/user-fallback.png')
         }
     },
     created() {
         wfc.eventEmitter.on(EventType.ConnectionStatusChanged, this.onConnectionStatusChange)
         axios.defaults.baseURL = Config.APP_SERVER;
 
+        axios.defaults.headers.common['authToken'] = getItem('authToken');
+
         let userId = getItem('userId');
-        console.info('userId',userId)
         let token = getItem('token');
         if (userId) {
             let portrait = getItem("userPortrait");
-            if(portrait){
-                this.qrCode = portrait;
-            }
-            else{
-                this.qrCode = this.portrait
-            }
+            this.qrCode = portrait ? portrait : Config.DEFAULT_PORTRAIT_URL;
 
             let autoLogin = getItem(userId + '-' + 'autoLogin') === '1'
             if (autoLogin && token) {
@@ -122,9 +119,7 @@ export default {
                 this.appToken = session.token;
                 if (!userId || session.status === 0/*服务端pc login session不存在*/) {
                     this.qrCode = jrQRCode.getQrBase64(Config.QR_CODE_PREFIX_PC_SESSION + session.token);
-                    if (userId) {
-                        this.refreshQrCode();
-                    }
+                    this.refreshQrCode();
                 }
                 this.login();
             }
@@ -154,23 +149,25 @@ export default {
                             let userId = response.data.result.userId;
                             let imToken = response.data.result.token;
                             wfc.connect(userId, imToken);
+                            this.loginStatus = 4;
                             setItem('userId', userId);
                             setItem('token', imToken);
+                            let appAuthToken = response.headers['authtoken'];
+                            if (!appAuthToken) {
+                                appAuthToken = response.headers['authToken'];
+                            }
+
+                            if (appAuthToken) {
+                                setItem('authToken', appAuthToken);
+                                axios.defaults.headers.common['authToken'] = appAuthToken;
+                            }
                         }
-                        break;
-                    case 8:
-                        this.lastAppToken = ''
-                        this.qrCode = null;
-                        this.appToken = '';
-                        this.loginStatus = 0;
-                        this.createPCLoginSession(null);
                         break;
                     case 9:
-                        if(response.data.result.portrait){
+                        if (response.data.result.portrait) {
                             this.qrCode = response.data.result.portrait;
-                        }
-                        else{
-                            this.qrCode = this.portrait
+                        } else {
+                            this.qrCode = Config.DEFAULT_PORTRAIT_URL;
                         }
                         setItem("userName", response.data.result.userName);
                         setItem("userPortrait", response.data.result.portrait);
@@ -213,7 +210,6 @@ export default {
         },
 
         onConnectionStatusChange(status) {
-            console.log('onConnectionStatusChange',status)
             if (status === ConnectionStatus.ConnectionStatusLogout
                 || status === ConnectionStatus.ConnectionStatusRejected
                 || status === ConnectionStatus.ConnectionStatusSecretKeyMismatch
@@ -225,7 +221,6 @@ export default {
                 if (isElectron() || (Config.CLIENT_ID_STRATEGY === 1 || Config.CLIENT_ID_STRATEGY === 2)) {
                     isElectron() && ipcRenderer.send('logined', {closeWindowToExit: getItem(wfc.getUserId() + '-' + 'closeWindowToExit') === '1'})
                     if (this.enableAutoLogin) {
-                        // 设置自动登录
                         store.setEnableAutoLogin(this.enableAutoLogin)
                     }
                 }
@@ -256,6 +251,7 @@ export default {
 
     components: {
         ElectronWindowsControlButtonView,
+        ClipLoader,
     }
 
 }
@@ -285,6 +281,11 @@ export default {
     height: 250px;
     border-radius: 3px;
     object-fit: contain;
+}
+
+.qr-container .loading {
+    position: absolute;
+    border-width: 4px;
 }
 
 .pending-scan,

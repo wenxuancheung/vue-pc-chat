@@ -23,6 +23,7 @@
                            v-model="sharedPickState.messages"/>
                     <img ref="userCardTippy"
                          :name="'infoTrigger' + this.message.messageId"
+                         @click="onClickUserPortrait(message.from)"
                          class="avatar"
                          draggable="false"
                          :src="message._from.portrait">
@@ -58,6 +59,7 @@ import MessageContentContainerView from "@/ui/main/conversation/message/MessageC
 import QuoteMessageView from "@/ui/main/conversation/message/QuoteMessageView";
 import LoadingView from "@/ui/common/LoadingView";
 import store from "@/store";
+import wfc from "../../../../wfc/client/wfc";
 
 export default {
     name: "NormalInMessageContentView",
@@ -71,6 +73,9 @@ export default {
         }
     },
     methods: {
+        onClickUserPortrait(userId) {
+            wfc.getUserInfo(userId, true);
+        },
         closeUserCard() {
             console.log('closeUserCard')
             this.$refs["userCardTippy"]._tippy.hide();

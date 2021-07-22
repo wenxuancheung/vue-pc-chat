@@ -23,6 +23,7 @@ import proto from '../marswrapper.node';
 import pkg from '../package.json';
 import Badge from 'electron-windows-badge';
 import {createProtocol} from "vue-cli-plugin-electron-builder/lib";
+import IPCRendererEventType from "./ipcRendererEventType";
 
 // Scheme must be registered before the app is ready
 protocol.registerSchemesAsPrivileged([
@@ -49,6 +50,7 @@ let mainWindow;
 let fileWindow;
 let compositeMessageWindows = new Map();
 let workspaceWindow;
+let conversationMessageHistoryMessageWindow;
 let winBadge;
 let screenshots;
 let tray;
@@ -506,8 +508,9 @@ const createMainWindow = async () => {
         y: mainWindowState.y,
         width: 400,
         height: 480,
-        minWidth: 800,
+        minWidth: 400,
         minHeight: 480,
+        opacity: 0,
         titleBarStyle: 'hidden',
         maximizable: false,
         resizable: false,
@@ -541,6 +544,7 @@ const createMainWindow = async () => {
         try {
             mainWindow.show();
             mainWindow.focus();
+            setTimeout(() => mainWindow.setOpacity(1), 1000 / 60);
         } catch (ex) {
             // do nothing
         }
@@ -650,33 +654,15 @@ const createMainWindow = async () => {
     ipcMain.on('show-file-window', async (event, args) => {
         console.log('on show-file-window', fileWindow, args)
         if (!fileWindow) {
-            let win = new BrowserWindow(
-                {
-                    width: 800,
-                    height: 730,
-                    minWidth: 640,
-                    minHeight: 400,
-                    resizable: true,
-                    maximizable: true,
-                    webPreferences: {
-                        scrollBounce: false,
-                        nativeWindowOpen: true,
-                        nodeIntegration: true,
-                    },
-                }
-            );
-            win.removeMenu();
-            fileWindow = win;
+            let win = createWindow(args.url, 800, 730, 640, 400, true, true);
 
             // win.webContents.openDevTools();
             win.on('close', () => {
                 fileWindow = null;
             });
             win.webContents.session.on('will-download', downloadHandler);
-
-            win.loadURL(args.url);
-            console.log('files windows url', args.url)
             win.show();
+            fileWindow = win;
         } else {
             fileWindow.show();
             fileWindow.focus();
@@ -687,31 +673,14 @@ const createMainWindow = async () => {
         let messageUid = args.messageUid;
         let compositeMessageWin = compositeMessageWindows.get(messageUid);
         if (!compositeMessageWin) {
-            let win = new BrowserWindow(
-                {
-                    width: 700,
-                    height: 850,
-                    minWidth: 700,
-                    minHeight: 850,
-                    resizable: false,
-                    maximizable: false,
-                    webPreferences: {
-                        scrollBounce: false,
-                        nativeWindowOpen: true,
-                        nodeIntegration: true,
-                    },
-                }
-            );
-            win.removeMenu();
+            let url = args.url + ('?messageUid=' + messageUid)
+            let win = createWindow(url, 700, 850, 700, 850, false, false);
             compositeMessageWindows.set(messageUid, win)
 
             // win.webContents.openDevTools();
             win.on('close', () => {
                 compositeMessageWindows.delete(messageUid);
             });
-
-            win.loadURL(args.url + ('?messageUid=' + messageUid));
-            console.log('composite message windows url', args.url)
             win.show();
         } else {
             compositeMessageWin.show();
@@ -722,38 +691,29 @@ const createMainWindow = async () => {
     ipcMain.on('show-workspace-window', async (event, args) => {
         console.log('on show-workspace-window', workspaceWindow, args)
         if (!workspaceWindow) {
-            let win = new BrowserWindow(
-                {
-                    width: 1080,
-                    height: 720,
-                    minWidth: 800,
-                    minHeight: 600,
-                    resizable: true,
-                    maximizable: true,
-                    // titleBarStyle: 'customButtonsOnHover',
-                    webPreferences: {
-                        scrollBounce: false,
-                        nativeWindowOpen: true,
-                        nodeIntegration: true,
-                        webviewTag: true
-                    },
-                    // frame:false
-                }
-            );
-            win.removeMenu();
-            workspaceWindow = win;
-
-            // win.webContents.openDevTools();
-            win.on('close', () => {
+            workspaceWindow = createWindow(args.url, 1080, 720, 800, 600, true, true);
+            workspaceWindow.on('close', () => {
                 workspaceWindow = null;
             });
-
-            win.loadURL(args.url);
-            console.log('files windows url', args.url)
-            win.show();
+            workspaceWindow.show();
         } else {
             workspaceWindow.show();
             workspaceWindow.focus();
+        }
+    });
+
+    ipcMain.on(IPCRendererEventType.showConversationMessageHistoryPage, async (event, args) => {
+        console.log(`on ${IPCRendererEventType.showConversationMessageHistoryPage}`, conversationMessageHistoryMessageWindow, args)
+        if (!conversationMessageHistoryMessageWindow) {
+            let url = args.url + (`?type=${args.type}&target=${args.target}&line=${args.line}`)
+            conversationMessageHistoryMessageWindow = createWindow(url, 700, 850, 700, 850, true, true, false);
+            conversationMessageHistoryMessageWindow.on('close', () => {
+                conversationMessageHistoryMessageWindow = null;
+            });
+            conversationMessageHistoryMessageWindow.show();
+        } else {
+            conversationMessageHistoryMessageWindow.show();
+            conversationMessageHistoryMessageWindow.focus();
         }
     });
 
@@ -829,6 +789,52 @@ const createMainWindow = async () => {
     regShortcut();
 };
 
+// TODO titleBarStyle
+function createWindow(url, w, h, mw, mh, resizable = true, maximizable = true, showTitle = true) {
+    let win = new BrowserWindow(
+        {
+            width: w,
+            height: h,
+            minWidth: mw,
+            minHeight: mh,
+            resizable: resizable,
+            maximizable: maximizable,
+            titleBarStyle: showTitle ? 'default' : 'hiddenInset',
+            // titleBarStyle: 'customButtonsOnHover',
+            webPreferences: {
+                scrollBounce: false,
+                nativeWindowOpen: true,
+                nodeIntegration: true,
+                webviewTag: true
+            },
+            // frame:false
+        }
+    );
+    win.removeMenu();
+
+    win.loadURL(url);
+    console.log('create windows url', url)
+    win.webContents.on('new-window', (event, url) => {
+        event.preventDefault();
+        console.log('new-windows', url)
+        shell.openExternal(url);
+    });
+    return win;
+}
+
+// deep link
+const PROTOCOL = 'wfc';
+
+function onDeepLink(url) {
+    console.log('onOpenDeepLink', url)
+    mainWindow.webContents.send('deep-link', url);
+}
+
+app.setAsDefaultProtocolClient(PROTOCOL);
+app.on('open-url', (event, url) => {
+    onDeepLink(url);
+})
+
 app.setName(pkg.name);
 app.dock && app.dock.setIcon(icon);
 
@@ -837,12 +843,21 @@ if (!app.requestSingleInstanceLock()) {
     app.quit()
 }
 
-app.on('second-instance', () => {
+app.on('second-instance', (event, argv) => {
     if (mainWindow) {
         if (mainWindow.isMinimized()) mainWindow.restore()
         mainWindow.focus()
         mainWindow.show()
     }
+    let url = argv.find((arg) => arg.startsWith(PROTOCOL));
+    if (url) {
+        onDeepLink(url)
+    }
+})
+
+// windows上，需要正确设置appUserModelId，才能正常显示通知，不然通知的应用标识会显示为：electron.app.xxx
+app.on('will-finish-launching', () => {
+    app.setAppUserModelId("cn.wildfire.chat")
 })
 
 function registerLocalResourceProtocol() {

@@ -153,6 +153,7 @@ import BenzAMRRecorder from "benz-amr-recorder";
 import axios from "axios";
 import FavItem from "../../../wfc/model/favItem";
 import {stringValue} from "../../../wfc/util/longUtil";
+
 var amr;
 export default {
     components: {
@@ -176,19 +177,24 @@ export default {
             sharedPickState: store.state.pick,
             sharedMiscState: store.state.misc,
             isHandlerDragging: false,
+
             savedMessageListViewHeight: -1,
             saveMessageListViewFlexGrow: -1,
+
             dragAndDropEnterCount: 0,
             // FIXME 选中一个会话，然后切换到其他page，比如联系人，这时该会话收到新消息或发送消息，会导致新收到/发送的消息的界面错乱，尚不知道原因，但这么做能解决。
             fixTippy: false,
         };
     },
+
     activated() {
         this.fixTippy = true;
     },
+
     deactivated() {
         this.fixTippy = false;
     },
+
     methods: {
         dragEvent(e, v) {
             if (v === 'dragenter') {
@@ -216,6 +222,7 @@ export default {
         toggleConversationInfo() {
             this.showConversationInfo = !this.showConversationInfo;
         },
+
         toggleMessageMultiSelectionActionView(message) {
             if (!this.sharedConversationState.enableMessageMultiSelection) {
                 this.saveMessageListViewFlexGrow = this.$refs['conversationMessageList'].style.flexGrow;
@@ -230,6 +237,7 @@ export default {
             this.sharedPickState.messages.forEach(m => console.log(m.messageId));
             store.toggleMessageMultiSelection(message);
         },
+
         clickMessageItem(event, message) {
             if (message.messageContent instanceof NotificationMessageContent) {
                 return;
@@ -239,20 +247,24 @@ export default {
                 event.stopPropagation();
             }
         },
+
         hideConversationInfo() {
             // TODO
             // 是否在创建群聊，或者是在查看会话参与者信息
             this.showConversationInfo && (this.showConversationInfo = false);
         },
+
         isNotificationMessage(message) {
             return message && message.messageContent instanceof NotificationMessageContent;
         },
+
         openMessageContextMenu(event, message) {
             if (!message || message.messageContent instanceof NotificationMessageContent) {
                 return;
             }
             this.$refs.menu.open(event, message);
         },
+
         onScroll(e) {
             // hide tippy userCard
             for (const popper of document.querySelectorAll('.tippy-popper')) {
@@ -263,6 +275,7 @@ export default {
             }
             // hide message context menu
             this.$refs.menu && this.$refs.menu.close();
+
             // 当用户往上滑动一段距离之后，收到新消息，不自动滚到到最后
             if (e.target.scrollHeight > e.target.clientHeight + e.target.scrollTop + e.target.clientHeight / 2) {
                 store.setShouldAutoScrollToBottom(false)
@@ -270,32 +283,42 @@ export default {
                 store.setShouldAutoScrollToBottom(true)
             }
         },
+
         dragStart() {
             this.isHandlerDragging = true;
             console.log('drag start')
         },
+
         drag(e) {
             // Don't do anything if dragging flag is false
             if (!this.isHandlerDragging) {
                 return false;
             }
+
             // Get offset
             let containerOffsetTop = this.$refs['conversationContentContainer'].offsetTop;
+
             // Get x-coordinate of pointer relative to container
             let pointerRelativeYpos = e.clientY - containerOffsetTop;
+
             // Arbitrary minimum width set on box A, otherwise its inner content will collapse to width of 0
             let boxAminHeight = 150;
+
             // Resize box A
             // * 8px is the left/right spacing between .handler and its inner pseudo-element
             // * Set flex-grow to 0 to prevent it from growing
             this.$refs['conversationMessageList'].style.height = (Math.max(boxAminHeight, pointerRelativeYpos)) + 'px';
             this.$refs['conversationMessageList'].style.flexGrow = 0;
+
         },
+
         dragEnd() {
             this.isHandlerDragging = false;
         },
+
         onMenuClose() {
         },
+
         // message context menu
         isCopyable(message) {
             return message && (message.messageContent instanceof TextMessageContent || message.messageContent instanceof ImageMessageContent);
@@ -305,12 +328,14 @@ export default {
                 || message.messageContent instanceof FileMessageContent
                 || message.messageContent instanceof VideoMessageContent);
         },
+
         isForwardable(message) {
             if (message && message.messageContent instanceof SoundMessageContent) {
                 return false;
             }
             return true;
         },
+
         isFavable(message) {
             if (!message) {
                 return false;
@@ -318,9 +343,11 @@ export default {
             return [MessageContentType.VOIP_CONTENT_TYPE_START,
                 MessageContentType.CONFERENCE_CONTENT_TYPE_INVITE].indexOf(message.messageContent.type) <= -1;
         },
+
         isRecallable(message) {
             return message && message.direction === 0 && new Date().getTime() - numberValue(message.timestamp) < 60 * 1000;
         },
+
         isLocalFile(message) {
             if (message && isElectron()) {
                 let media = message.messageContent;
@@ -331,6 +358,7 @@ export default {
             }
             return false;
         },
+
         isQuotable(message) {
             if (!message) {
                 return false;
@@ -338,8 +366,10 @@ export default {
             return [MessageContentType.VOIP_CONTENT_TYPE_START,
                 MessageContentType.Voice,
                 MessageContentType.Video,
+                MessageContentType.Composite_Message,
                 MessageContentType.CONFERENCE_CONTENT_TYPE_INVITE].indexOf(message.messageContent.type) <= -1;
         },
+
         copy(message) {
             let content = message.messageContent;
             if (content instanceof TextMessageContent) {
@@ -361,31 +391,39 @@ export default {
                 }
             }
         },
+
         openFile(message) {
             let file = message.messageContent;
             shell.openItem(file.localPath);
         },
+
         openDir(message) {
             let file = message.messageContent;
             shell.showItemInFolder(file.localPath);
         },
+
         recallMessage(message) {
             wfc.recallMessage(message.messageUid, null, null);
         },
+
         delMessage(message) {
             wfc.deleteMessage(message.messageId);
         },
+
         forward(message) {
             return this.pickConversationAndForwardMessage(ForwardType.NORMAL, [message]);
         },
+
         _forward(message){
             this.forward(message).catch(()=>{
                // do nothing
             });
         },
+
         quoteMessage(message) {
             store.quoteMessage(message);
         },
+
         favMessage(message) {
             let favItem = FavItem.fromMessage(message);
             axios.post('/fav/add', {
@@ -422,11 +460,14 @@ export default {
                         text: '收藏失败',
                         type: 'error'
                     });
+
                 })
         },
+
         multiSelect(message) {
             this.toggleMessageMultiSelectionActionView(message);
         },
+
         infiniteHandler($state) {
             console.log('to load more message');
             store.loadConversationHistoryMessages(() => {
@@ -437,6 +478,7 @@ export default {
                 $state.complete()
             });
         },
+
         pickConversationAndForwardMessage(forwardType, messages) {
             return new Promise(((resolve, reject) => {
                 let beforeClose = (event) => {
@@ -458,6 +500,7 @@ export default {
                         reject();
                     }
                 };
+
                 this.$modal.show(
                     ForwardMessageByPickConversationView,
                     {
@@ -473,8 +516,10 @@ export default {
                     })
             }));
         },
+
         createConversationAndForwardMessage(forwardType, messages) {
             return new Promise(((resolve, reject) => {
+
                 let beforeClose = (event) => {
                     console.log('Closing...', event, event.params)
                     if (event.params.backPickConversation) {
@@ -523,23 +568,28 @@ export default {
             })
         },
     },
+
     mounted() {
         this.popupItem = this.$refs['setting'];
         document.addEventListener('mouseup', this.dragEnd);
         document.addEventListener('mousemove', this.drag);
+
         this.$on('openMessageContextMenu', function (event, message) {
             this.$refs.menu.open(event, message);
         });
+
         this.$eventBus.$on('send-file', args => {
             let fileMessageContent = new FileMessageContent(null, args.remoteUrl, args.name, args.size);
             let message = new Message(null, fileMessageContent);
             this.forward(message)
         });
+
         this.$eventBus.$on('forward-fav', args => {
             let favItem = args.favItem;
             let message = favItem.toMessage();
             this.forward(message);
         });
+
         localStorageEmitter.on('inviteConferenceParticipant', (ev, args) => {
             if (isElectron()) {
                 remote.getCurrentWindow().focus();
@@ -556,12 +606,14 @@ export default {
                 });
         });
     },
+
     beforeDestroy() {
         document.removeEventListener('mouseup', this.dragEnd);
         document.removeEventListener('mousemove', this.drag);
         this.$eventBus.$off('send-file')
         this.$eventBus.$off('forward-fav')
     },
+
     updated() {
         this.popupItem = this.$refs['setting'];
         // refer to http://iamdustan.com/smoothscroll/
@@ -580,11 +632,13 @@ export default {
                 }
             }
         }
+
         if (this.conversationInfo && this.sharedConversationState.currentConversationInfo && !this.conversationInfo.conversation.equal(this.sharedConversationState.currentConversationInfo.conversation)) {
             this.showConversationInfo = false;
         }
         this.conversationInfo = this.sharedConversationState.currentConversationInfo;
     },
+
     computed: {
         conversationTitle() {
             let info = this.sharedConversationState.currentConversationInfo;
@@ -606,6 +660,7 @@ export default {
             return null;
         }
     },
+
     directives: {
         ClickOutside
     },
@@ -624,10 +679,12 @@ export default {
     border-bottom-right-radius: var(--main-border-radius);
     /*border-left: 1px solid #e6e6e6;*/
 }
+
 .conversation-empty-container h1 {
     font-size: 17px;
     font-weight: normal;
 }
+
 .title-container {
     width: 100%;
     height: 60px;
@@ -640,26 +697,33 @@ export default {
     border-top-right-radius: var(--main-border-radius);
     position: relative;
 }
+
+
 .title-container h1 {
     font-size: 16px;
     font-weight: normal;
 }
+
 .title-container a {
     text-decoration: none;
     padding: 15px;
     color: #181818;
 }
+
 .title-container a:active {
     color: #d6d6d6;
 }
+
 .conversation-container {
     height: 100%;
     display: flex;
     flex-direction: column;
 }
+
 .conversation-container header {
     border-top-right-radius: var(--main-border-radius);
 }
+
 .conversation-container header {
     width: 100%;
     height: 60px;
@@ -669,6 +733,7 @@ export default {
     background-color: #f5f5f5;
     border-bottom: 1px solid #e6e6e6;
 }
+
 .conversation-content-container {
     flex: 1;
     height: calc(100% - 60px);
@@ -678,6 +743,7 @@ export default {
     background-color: #f3f3f3;
     border-bottom-right-radius: var(--main-border-radius);
 }
+
 .conversation-content-container .drag-drop-container {
     position: absolute;
     background-color: #f2f2f2a5;
@@ -688,6 +754,7 @@ export default {
     height: 100%;
     padding: 20px 15px 15px 15px;
 }
+
 .conversation-content-container .drag-drop {
     border: 2px dashed #b2b2b2;
     height: 100%;
@@ -697,31 +764,38 @@ export default {
     justify-content: center;
     align-items: center;
 }
+
 .conversation-content-container .drag-drop p {
     padding-bottom: 100px;
 }
+
 .conversation-message-list {
     flex: 1 1 auto;
     overflow: auto;
 }
+
 .conversation-message-list ul {
     list-style: none;
 }
+
 /*.handler {*/
 /*  height: 1px;*/
 /*  background-color: #e2e2e2;*/
 /*}*/
+
 .inputting-container {
     display: flex;
     padding: 10px 20px;
     align-items: center;
 }
+
 .inputting-container .avatar {
     width: 40px;
     height: 40px;
     border-radius: 3px;
     margin-right: 20px;
 }
+
 .divider-handler::before {
     cursor: row-resize;
     content: '';
@@ -731,10 +805,12 @@ export default {
     border-top: 1px solid #e2e2e2;
     margin: 0 auto;
 }
+
 .message-input-container {
     height: 200px;
     min-height: 200px;
 }
+
 .conversation-info-container {
     display: none;
     width: 250px;
@@ -746,6 +822,7 @@ export default {
     backdrop-filter: blur(6px);
     border-left: 1px solid #e6e6e6;
 }
+
 .conversation-info-container.active {
     display: flex;
 }

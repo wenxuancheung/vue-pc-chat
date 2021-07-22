@@ -27,6 +27,7 @@
                         name="infoTrigger"
                         class="avatar"
                         draggable="false"
+                        @click="onClickPortrait()"
                         :src="sharedContactState.selfUserInfo.portrait"
                         alt=""
                     /></a>
@@ -78,8 +79,8 @@
             <keep-alive>
                 <router-view :key="$route.fullPath"></router-view>
             </keep-alive>
-            <div class="drag-area" :style="dragAreaLeft"></div>
             <div v-if="sharedMiscState.connectionStatus === -1" class="unconnected">网络连接断开</div>
+            <div class="drag-area" :style="dragAreaLeft"></div>
             <div v-if="!sharedMiscState.isElectron"
                  v-show="voipProxy.useIframe && voipProxy.callId"
                  class="voip-iframe-container"
@@ -135,6 +136,9 @@ export default {
     },
 
     methods: {
+        onClickPortrait() {
+            wfc.getUserInfo(this.sharedContactState.selfUserInfo.uid, true);
+        },
         go2Conversation() {
             if (this.$router.currentRoute.path === '/home') {
                 return
@@ -467,8 +471,9 @@ i.active {
     padding: 15px 0;
     text-align: center;
     background: #f2f2f280;
-    box-shadow: 0 0 1px #000;
+    /*box-shadow: 0 0 1px #000;*/
 }
+
 .voip-iframe-container {
     background: #292929;
     position: absolute;
