@@ -25,7 +25,7 @@ import SearchType from "@/wfc/model/searchType";
 import Config from "@/config";
 import {getItem, setItem} from "@/ui/util/storageHelper";
 import CompositeMessageContent from "@/wfc/messages/compositeMessageContent";
-import IPCEventType from "./ipcEventType";
+import IPCEventType from "./ipc/ipcEventType";
 import localStorageEmitter from "./ipc/localStorageEmitter";
 import {stringValue} from "./wfc/util/longUtil";
 
@@ -802,6 +802,30 @@ let store = {
         conversationState.quotedMessage = message;
     },
 
+    getConversationInfo(conversation){
+        let info = wfc.getConversationInfo(conversation);
+        return this._patchConversationInfo(info, false);
+    },
+
+    getMessages(conversation, fromUid = 0, before = true, withUser = '', callback) {
+        let msg = wfc.getMessageByUid(fromUid);
+        let fromIndex = 0;
+        fromIndex = msg ? msg.messageId : 0;
+        let lmsgs = wfc.getMessages(conversation, fromIndex, before, 20);
+        if (lmsgs.length > 0) {
+            lmsgs = lmsgs.map(m => this._patchMessage(m, 0));
+            setTimeout(() => callback(lmsgs), 200)
+        } else {
+            wfc.loadRemoteConversationMessages(conversation, fromUid, 20,
+                (msgs) => {
+                    callback(msgs.map(m => this._patchMessage(m, 0)))
+                },
+                (error) => {
+                    callback([])
+                });
+        }
+    },
+
     _loadCurrentConversationMessages() {
         if (!conversationState.currentConversationInfo) {
             return;
@@ -1218,10 +1242,9 @@ let store = {
         })
     },
 
-    // TODO
-    searchMessage(query) {
-
-        return [];
+    searchMessage(conversation, query) {
+        let msgs = wfc.searchMessage(conversation, query)
+        return msgs.map(m => this._patchMessage(m, 0));
     },
 
     // pick actions
