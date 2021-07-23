@@ -940,7 +940,7 @@ let store = {
         // TODO
         // _from
         // _showTime
-        m._from = wfc.getUserInfo(m.from, false, m.conversation.type === ConversationType.Group ? m.conversation.target : '');
+        m._from = wfc.getUserInfo(m.from, true, m.conversation.type === ConversationType.Group ? m.conversation.target : '');
         if (m.conversation.type === ConversationType.Group) {
             m._from._displayName = wfc.getGroupMemberDisplayNameEx(m._from);
         } else {
