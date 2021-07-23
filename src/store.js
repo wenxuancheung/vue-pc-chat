@@ -816,13 +816,15 @@ let store = {
             lmsgs = lmsgs.map(m => this._patchMessage(m, 0));
             setTimeout(() => callback(lmsgs), 200)
         } else {
-            wfc.loadRemoteConversationMessages(conversation, fromUid, 20,
-                (msgs) => {
-                    callback(msgs.map(m => this._patchMessage(m, 0)))
-                },
-                (error) => {
-                    callback([])
-                });
+            callback([]);
+            // 只获取本地的消息
+            // wfc.loadRemoteConversationMessages(conversation, fromUid, 20,
+            //     (msgs) => {
+            //         callback(msgs.map(m => this._patchMessage(m, 0)))
+            //     },
+            //     (error) => {
+            //         callback([])
+            //     });
         }
     },
 
@@ -938,7 +940,7 @@ let store = {
         // TODO
         // _from
         // _showTime
-        m._from = wfc.getUserInfo(m.from, true, m.conversation.type === ConversationType.Group ? m.conversation.target : '');
+        m._from = wfc.getUserInfo(m.from, false, m.conversation.type === ConversationType.Group ? m.conversation.target : '');
         if (m.conversation.type === ConversationType.Group) {
             m._from._displayName = wfc.getGroupMemberDisplayNameEx(m._from);
         } else {
@@ -972,7 +974,7 @@ let store = {
 
     _patchConversationInfo(info, patchLastMessage = true) {
         if (info.conversation.type === ConversationType.Single) {
-            info.conversation._target = wfc.getUserInfo(info.conversation.target, true);
+            info.conversation._target = wfc.getUserInfo(info.conversation.target, false);
             info.conversation._target._displayName = wfc.getUserDisplayNameEx(info.conversation._target);
         } else if (info.conversation.type === ConversationType.Group) {
             info.conversation._target = wfc.getGroupInfo(info.conversation.target, false);
@@ -1007,7 +1009,7 @@ let store = {
     // contact actions
 
     _loadSelfUserInfo() {
-        contactState.selfUserInfo = wfc.getUserInfo(wfc.getUserId(), true);
+        contactState.selfUserInfo = wfc.getUserInfo(wfc.getUserId(), false);
     },
 
     _loadFriendList() {
@@ -1142,7 +1144,7 @@ let store = {
             searchState.contactSearchResult = this.filterContact(query);
             searchState.groupSearchResult = this.filterGroupConversation(query);
             searchState.conversationSearchResult = this.filterConversation(query);
-            searchState.messageSearchResult = this.searchMessage(query);
+            // searchState.messageSearchResult = this.searchMessage(query);
             // 默认不搜索新用户
             // this.searchUser(query);
 
@@ -1390,9 +1392,9 @@ let store = {
         let userInfos = [];
         if (conversation.type === 0) {
             if (conversation.target !== contactState.selfUserInfo.uid) {
-                userInfos.push(wfc.getUserInfo(wfc.getUserId(), true));
+                userInfos.push(wfc.getUserInfo(wfc.getUserId(), false));
             }
-            userInfos.push(wfc.getUserInfo(conversation.target, true));
+            userInfos.push(wfc.getUserInfo(conversation.target, false));
             let userInfosCloneCopy = userInfos.map(u => Object.assign({}, u));
             userInfos = this._patchAndSortUserInfos(userInfosCloneCopy, '');
         } else if (conversation.type === 1) {
