@@ -13,12 +13,10 @@
                                 <span class="name single-line">{{ friendRequest._target.displayName }}</span>
                                 <span class="status"
                                       v-if="friendRequest.status === 1">{{ $t('friend_request.accepted') }}</span>
-                                <!-- <span class="status"
-                                      v-else-if="friendRequest.status === 0">{{ $t('friend_request.sent') }}</span> -->
                                 <span class="status"
                                       v-else-if="friendRequest.status === 3">{{ $t('friend_request.denied') }}</span>
                                 <!--添加好友-->
-                                <button class="accept" v-else @click="handleFriendRequest(friendRequest)">{{ $t('common.add') }}</button>
+                                <button class="accept" v-else-if="friendRequest.status === 0" @click="handleFriendRequest(friendRequest)">{{ $t('common.add') }}</button>
                             </div>
                             <p class="reason single-line">
                                 {{friendRequest.reason}}
