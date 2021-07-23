@@ -29,7 +29,8 @@
                 </div>
                 <!--消息内容 根据情况，if-else-->
                 <div class="message-name-content-container">
-                    <p class="name">{{ message._from.displayName }}</p>
+                    <!--先显示群昵称后显示用户名称-->
+                    <p class="name">{{ message._from.groupAlias ? message._from.groupAlias : message._from.displayName }}</p>
                     <div class="flex-column flex-align-start">
                         <div class="flex-row">
                             <MessageContentContainerView :message="message"

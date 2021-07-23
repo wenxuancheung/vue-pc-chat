@@ -1,4 +1,5 @@
 <template>
+    <!--好友请求列表-->
     <section>
         <ul>
             <li v-for="(friendRequest,index) in sharedContactState.friendRequestList" :key="index"
@@ -12,15 +13,16 @@
                                 <span class="name single-line">{{ friendRequest._target.displayName }}</span>
                                 <span class="status"
                                       v-if="friendRequest.status === 1">{{ $t('friend_request.accepted') }}</span>
-                                <span class="status"
-                                      v-else-if="friendRequest.status === 0">{{ $t('friend_request.sent') }}</span>
+                                <!-- <span class="status"
+                                      v-else-if="friendRequest.status === 0">{{ $t('friend_request.sent') }}</span> -->
                                 <span class="status"
                                       v-else-if="friendRequest.status === 3">{{ $t('friend_request.denied') }}</span>
-                                <button class="accept" v-else>{{ $t('common.add') }}</button>
+                                <!--添加好友-->
+                                <button class="accept" v-else @click="handleFriendRequest(friendRequest)">{{ $t('common.add') }}</button>
                             </div>
-                            <p class="reason single-line">{{
-                                    $t('friend_request.im') + friendRequest._target.displayName
-                                }}</p>
+                            <p class="reason single-line">
+                                {{friendRequest.reason}}
+                            </p>
                         </div>
                     </div>
                 </div>
@@ -44,10 +46,32 @@ export default {
         };
     },
     methods: {
+        // 打开好友详情
         showFriendRequest(friendRequest) {
             store.setCurrentFriendRequest(friendRequest);
+        },
+        handleFriendRequest(friendRequest) {
+            let successCB = (res) => {
+                store._loadFriendRequest()
+                this.$notify({
+                    text: '添加成功',
+                    type: 'info'
+                });
+                console.log(res)
+            }
+            let failCB = (err) => {
+                this.$notify({
+                    text: '添加失败',
+                    type: 'info'
+                });
+                console.log(err)
+            }
+            store.handleFriendRequest(friendRequest.target,true,'',successCB,failCB)
         }
-    }
+    },
+    created() {
+        console.log(this.sharedContactState)
+    },
 }
 </script>
 
