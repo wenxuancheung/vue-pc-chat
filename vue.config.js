@@ -71,7 +71,7 @@ module.exports = {
               },
               linux: {
                 category: "Chat",
-                executableName: "wildfireChat",
+                executableName: "乐寻坊IM",
                 target: [
                   'deb',
                   'AppImage'
@@ -88,7 +88,7 @@ module.exports = {
                 deleteAppDataOnUninstall: true,
                 perMachine: false,
                 createDesktopShortcut: true,
-                shortcutName: "wildfireChat"
+                shortcutName: "乐寻坊IM"
               }
             }
         }
