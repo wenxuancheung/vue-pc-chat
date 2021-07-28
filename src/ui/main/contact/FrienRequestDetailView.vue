@@ -15,7 +15,7 @@
                 <li>
                     <label>{{ $t('common.alias') }}</label>
                     <div class="alias">
-                        <input type="text" :value="sharedStateContact.currentFriendRequest._target.alias"
+                        <input type="text" :value="value"
                                placeholder="备注名" @keypress.enter="send($event)" />
                     </div>
                 </li>
@@ -85,6 +85,14 @@ export default {
                 name = friend.name;
             }
             return name;
+        },
+        value() {
+            if(this.sharedStateContact.currentFriendRequest._target.friendAlias){
+                return this.sharedStateContact.currentFriendRequest._target.friendAlias
+            }
+            else{
+                return ''
+            }
         }
     }
 }

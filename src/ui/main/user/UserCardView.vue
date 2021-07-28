@@ -14,7 +14,7 @@
                 <li v-if="!isSelf">
                     <label>{{ $t('common.alias') }}</label>
                     <div class="alias">
-                        <input @click.stop="" type="text" placeholder="备注名" @keypress.enter="send($event)"/>
+                        <input @click.stop="" type="text" placeholder="备注名" @keypress.enter="send($event)" v-model="value"/>
                     </div>
                 </li>
                 <li>
@@ -104,6 +104,12 @@ export default {
         // 是否自己
         isSelf() {
             return this.userInfo.uid === wfc.getUserId()
+        },
+        value() {
+            if(this.userInfo.friendAlias){
+                return this.userInfo.friendAlias
+            }
+            return ''
         }
     }
 };

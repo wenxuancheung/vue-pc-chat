@@ -14,7 +14,7 @@
                 <li>
                     <label>{{ $t('common.alias') }}</label>
                     <div class="alias">
-                        <input type="text" :value="sharedStateContact.currentFriend.alias" placeholder="备注名"  @keypress.enter="send($event)"/>
+                        <input type="text" :value="value" placeholder="备注名"  @keypress.enter="send($event)"/>
                     </div>
                 </li>
                 <li>
@@ -67,6 +67,7 @@ export default {
                     type: 'info'
                 });
                 console.log(res)
+                wfc.getUserInfo(this.sharedStateContact.currentFriend.uid, true)
             }
             let failCB = (err) => {
                 this.$notify({
@@ -75,7 +76,7 @@ export default {
                 });
                 console.log(err)
             }
-            store.setFriendAlias(this.sharedStateContact.currentFriendRequest._target.uid,event.target.value,successCB,failCB)
+            store.setFriendAlias(this.sharedStateContact.currentFriend.uid,event.target.value,successCB,failCB)
         }
     },
     computed: {
@@ -94,6 +95,12 @@ export default {
                 wfc.getUserInfo(friend.uid, true)
             })();
             return name;
+        },
+        value() {
+            if(this.sharedStateContact.currentFriend.friendAlias){
+                return this.sharedStateContact.currentFriend.friendAlias
+            }
+            return ''
         }
     }
 }
