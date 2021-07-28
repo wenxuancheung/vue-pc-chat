@@ -10,7 +10,7 @@
                         <img class="avatar" :src="friendRequest._target.portrait">
                         <div class="info">
                             <div class="name-action">
-                                <span class="name single-line">{{ friendRequest._target.displayName }}</span>
+                                <span class="name single-line">{{ friendRequest._target.friendAlias || friendRequest._target.displayName }}</span>
                                 <span class="status"
                                       v-if="friendRequest.status === 1">{{ $t('friend_request.accepted') }}</span>
                                 <span class="status"

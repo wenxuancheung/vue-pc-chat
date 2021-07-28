@@ -103,7 +103,6 @@ export default {
         },
         // 是否自己
         isSelf() {
-            console.log(this.userInfo)
             return this.userInfo.uid === wfc.getUserId()
         }
     }
