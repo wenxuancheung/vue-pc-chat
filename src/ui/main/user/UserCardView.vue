@@ -11,10 +11,10 @@
         </div>
         <div class="content">
             <ul>
-                <li>
+                <li v-if="!isSelf">
                     <label>{{ $t('common.alias') }}</label>
                     <div class="alias">
-                        <input @click.stop="" type="text" placeholder="备注名"/>
+                        <input @click.stop="" type="text" placeholder="备注名" @keypress.enter="send($event)"/>
                     </div>
                 </li>
                 <li>
@@ -60,7 +60,24 @@ export default {
             store.setCurrentConversation(conversation)
             this.close();
         },
-
+        send(event) {
+            let successCB = (res) => {
+                this.$notify({
+                    text: '添加成功',
+                    type: 'info'
+                });
+                console.log(res)
+            }
+            let failCB = (err) => {
+                this.$notify({
+                    text: '添加失败',
+                    type: 'info'
+                });
+                console.log(err)
+            }
+            console.log(this.userInfo)
+            store.setFriendAlias(this.userInfo.uid,event.target.value,successCB,failCB)
+        },
         addFriend() {
             this.close();
             this.$modal.show(
@@ -83,6 +100,11 @@ export default {
     computed: {
         isFriend() {
             return this.userInfo.uid === wfc.getUserId() || wfc.isMyFriend(this.userInfo.uid)
+        },
+        // 是否自己
+        isSelf() {
+            console.log(this.userInfo)
+            return this.userInfo.uid === wfc.getUserId()
         }
     }
 };

@@ -14,7 +14,7 @@
                 <li>
                     <label>{{ $t('common.alias') }}</label>
                     <div class="alias">
-                        <input type="text" :value="sharedStateContact.currentFriend.alias" placeholder="备注名"/>
+                        <input type="text" :value="sharedStateContact.currentFriend.alias" placeholder="备注名"  @keypress.enter="send($event)"/>
                     </div>
                 </li>
                 <li>
@@ -59,6 +59,23 @@ export default {
             let conversation = new Conversation(ConversationType.Single, this.user.uid, 0);
             store.setCurrentConversation(conversation);
             this.$router.replace('/home');
+        },
+        send(event) {
+            let successCB = (res) => {
+                this.$notify({
+                    text: '添加成功',
+                    type: 'info'
+                });
+                console.log(res)
+            }
+            let failCB = (err) => {
+                this.$notify({
+                    text: '添加失败',
+                    type: 'info'
+                });
+                console.log(err)
+            }
+            store.setFriendAlias(this.sharedStateContact.currentFriendRequest._target.uid,event.target.value,successCB,failCB)
         }
     },
     computed: {
