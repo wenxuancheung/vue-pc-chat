@@ -1009,7 +1009,7 @@ let store = {
     // contact actions
 
     _loadSelfUserInfo() {
-        contactState.selfUserInfo = wfc.getUserInfo(wfc.getUserId(), false);
+        contactState.selfUserInfo = wfc.getUserInfo(wfc.getUserId(), true);
     },
 
     _loadFriendList() {
@@ -1393,9 +1393,9 @@ let store = {
         let userInfos = [];
         if (conversation.type === 0) {
             if (conversation.target !== contactState.selfUserInfo.uid) {
-                userInfos.push(wfc.getUserInfo(wfc.getUserId(), false));
+                userInfos.push(wfc.getUserInfo(wfc.getUserId(), true));
             }
-            userInfos.push(wfc.getUserInfo(conversation.target, false));
+            userInfos.push(wfc.getUserInfo(conversation.target, true));
             let userInfosCloneCopy = userInfos.map(u => Object.assign({}, u));
             userInfos = this._patchAndSortUserInfos(userInfosCloneCopy, '');
         } else if (conversation.type === 1) {
